@@ -1,0 +1,4 @@
+function read(){
+	const constant = 3 + 3
+	console.log("Leo Lins", constant)
+}

@@ -1,0 +1,1 @@
+Bulgarians are conservative

@@ -1,0 +1,6 @@
+: '#.*' '3'
+: '\'([^\'\\]*(?:\\.[^\'\\]*)*)\'' '2'
+: '"([^"\\]*(?:\\.[^"\\]*)*)"' '2'
+: '\b(and|as|assert|async|await|break|case|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|match|nonlocal|not|or|pass|raise|return|try|while|with|yield)\b' '1'
+: '\b(abs|all|any|ascii|bin|bool|breakpoint|bytearray|bytes|callable|chr|classmethod|compile|complex|delattr|dir|divmod|eval|exec|format|getattr|globals|hasattr|hash|help|hex|id|input|isinstance|issubclass|iter|len|locals|max|min|next|nonlocal|oct|open|ord|pow|print|repr|round|setattr|sorted|sum|vars|__import__)\b' '1'
+: '\b(Ellipsis|None|self|cls|True|False)\b' '2'

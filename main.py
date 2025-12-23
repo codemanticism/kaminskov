@@ -1,4 +1,5 @@
 from sys import argv
+import subprocess
 import signal
 import locale
 import tkinter as tk
@@ -31,8 +32,8 @@ def process(string, default):
                         open_file.close()
                     count += 1
             elif line[0] == ':':
-                count = 0
                 t = ""
+                count = 0
                 pieces = re.split(r"(?<!\\)'", line[1:])
                 for piece in pieces:
                     if count == 1:
@@ -266,6 +267,14 @@ def main(stdscr):
     curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(5, curses.COLOR_BLUE, curses.COLOR_BLACK)
     stdscr.scrollok(True)
+    able_to_be_modified = True
+    position_copy = [-1,-1]
+    special_copy = False
+    clipboard = ""
+    curses.raw()          # Ctrl+C becomes input, not SIGINT
+    curses.noecho()       # optional
+    stdscr.keypad(True)   # optional but recommended
+    
     while True:
         keyboard_key = stdscr.get_wch()
         # Dealing with keys
@@ -286,21 +295,47 @@ def main(stdscr):
                 special = before(optimizing_data_structure, position, special, True)
             elif keyboard_key == curses.KEY_RIGHT:
                 special = after(optimizing_data_structure, position, special, True)
-            elif keyboard_key in (curses.KEY_BACKSPACE, 8, 127):
-                if(special == False):
-                    optimizing_data_structure[position[0]][position[1]] = '' # lack of alignment between
-                special = before(optimizing_data_structure, position, special, True)
-            else:            
-                if(special):
-                    optimizing_data_structure[position[0]].insert(0, chr(keyboard_key))
-                else:
-                    if (position[0] + 1) not in range(len(optimizing_data_structure)):
-                        optimizing_data_structure.append([chr(keyboard_key)])
-                    else:
-                        optimizing_data_structure[position[0]].insert(1 + position[1], chr(keyboard_key))
-                special = after(optimizing_data_structure, position, special, True)
         else:
-            if (keyboard_key == '\x13') or (keyboard_key == '\x11'): #CTRL + S, CTRL + Q
+            if (keyboard_key == '\b'):
+                if(position_copy[0] != -1):
+                    position_start = [position_copy[0], position_copy[1]]
+                    special_start = special_copy
+                    while (special_start != special) or (position_start != position):
+                        special_start = after(optimizing_data_structure, position_start, special_start, True)
+                        if special_start == False:
+                            optimizing_data_structure[position_start[0]][position_start[1]] = ''    
+                    position_copy[0] = -1
+                if able_to_be_modified:
+                    if(special == False):
+                        optimizing_data_structure[position[0]][position[1]] = '' # lack of alignment between
+                    special = before(optimizing_data_structure, position, special, True)
+            elif (keyboard_key == '\x0b'): # CTRL + K
+                able_to_be_modified = False
+                position_copy[0] = position[0]
+                position_copy[1] = position[1]
+                special_copy = special
+            elif (keyboard_key == '\x0c'): # CTRL + L
+                position_copy[0] = -1
+                able_to_be_modified = True
+            elif (keyboard_key == '\x03'): # CTRL + C
+                if(position_copy[0] != -1):
+                    position_start = [position_copy[0], position_copy[1]]
+                    special_start = special_copy
+                    clipboard = []
+                    while (special_start != special) or (position_start != position):
+                        special_start = after(optimizing_data_structure, position_start, special_start, True)
+                        if special_start == False:
+                            clipboard.append( optimizing_data_structure[position_start[0]][position_start[1]] )  
+                    clipboard_str = "".join(clipboard)
+                    subprocess.run(
+                        ["xclip", "-selection", "clipboard"],
+                        input=clipboard_str,
+                        text=True,
+                        check=True
+                    )
+                    position_copy[0] = -1
+                    able_to_be_modified = True
+            elif (keyboard_key == '\x13') or (keyboard_key == '\x11'): #CTRL + S, CTRL + Q
                 if len(argv) >= 2:
                     try: 
                         write_file = open(argv[1], "w")
@@ -327,25 +362,24 @@ def main(stdscr):
                     continue
                 find( optimizing_data_structure, an_array[0], int(an_array[1]), position)
             elif keyboard_key == '\x12':
-                an_array = multi_input_popup("Find and replace all popup", ["Find", "Replace with"])
-                if len(an_array) == 0:
-                    continue
-                find_and_replace( optimizing_data_structure, an_array[0], an_array[1])
-                position = [0,0]
-                special = True
-            elif keyboard_key == '\b':
-                if(special == False):
-                    optimizing_data_structure[position[0]][position[1]] = '' # lack of alignment between
-                special = before(optimizing_data_structure, position, special ,True)
-            else:            
-                if(special):
-                    optimizing_data_structure[position[0]].insert(0, keyboard_key)
-                else:
-                    if (position[0] + 1) not in range(len(optimizing_data_structure)):
-                        optimizing_data_structure.append([keyboard_key])
+                if able_to_be_modified:
+                    an_array = multi_input_popup("Find and replace all popup", ["Find", "Replace with"])
+                    if len(an_array) == 0:
+                        continue
+                    find_and_replace( optimizing_data_structure, an_array[0], an_array[1])
+                    last = len(optimizing_data_structure) - 1
+                    position = [last ,len(optimizing_data_structure[last]) - 1]
+                    special = False
+            else:
+                if able_to_be_modified:            
+                    if(special):
+                        optimizing_data_structure[position[0]].insert(0, keyboard_key)
                     else:
-                        optimizing_data_structure[position[0]].insert(1 + position[1], keyboard_key)
-                special = after(optimizing_data_structure, position, special, True)
+                        if (position[0] + 1) not in range(len(optimizing_data_structure)):
+                            optimizing_data_structure.append([keyboard_key])
+                        else:
+                            optimizing_data_structure[position[0]].insert(1 + position[1], keyboard_key)
+                    special = after(optimizing_data_structure, position, special, True)
         #print(position)
         position_on_the_line = 0
         areas = []

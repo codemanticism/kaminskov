@@ -370,6 +370,34 @@ def main(stdscr):
                     last = len(optimizing_data_structure) - 1
                     position = [last ,len(optimizing_data_structure[last]) - 1]
                     special = False
+            elif keyboard_key == '\n':
+                if able_to_be_modified:
+                    some_copy_special = special
+                    some_copy_position = [ position[0], position[1] ]
+                    if (optimizing_data_structure[ some_copy_position[0] ][ some_copy_position[1] ] == '\n'):
+                        some_copy_special = before(optimizing_data_structure, some_copy_position, some_copy_special, False)
+                    while (is_first(optimizing_data_structure, some_copy_position) == False):
+                        some_copy_special = before(optimizing_data_structure, some_copy_position, some_copy_special, False)
+                        if (optimizing_data_structure[ some_copy_position[0] ][ some_copy_position[1] ] == '\n'):
+                            some_copy_special = after(optimizing_data_structure, some_copy_position, some_copy_special, False)
+                            break
+                    some_copy_special_copy = some_copy_special
+                    some_copy_position_copy = [some_copy_position[0], some_copy_position[1]] 
+                    clone_this = ['\n']
+                    while (optimizing_data_structure[ some_copy_position_copy[0] ][ some_copy_position_copy[1] ] == '\t') or (optimizing_data_structure[ some_copy_position_copy[0] ][ some_copy_position_copy[1] ] == ' '):
+                        clone_this.append( optimizing_data_structure[ some_copy_position_copy[0] ][ some_copy_position_copy[1] ] )
+                        if (is_last(optimizing_data_structure, some_copy_position_copy)):
+                            break
+                        some_copy_special_copy = after(optimizing_data_structure, some_copy_position_copy, some_copy_special_copy, False)                
+                    for character_in_clone_this in clone_this:
+                        if(special):
+                            optimizing_data_structure[position[0]].insert(0, character_in_clone_this)
+                        else:
+                            if (position[0] + 1) not in range(len(optimizing_data_structure)):
+                                optimizing_data_structure.append([character_in_clone_this])
+                            else:
+                                optimizing_data_structure[position[0]].insert(1 + position[1], character_in_clone_this)
+                        special = after(optimizing_data_structure, position, special, True)       
             else:
                 if able_to_be_modified:            
                     if(special):

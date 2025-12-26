@@ -1,3 +1,4 @@
+import time
 from sys import argv
 import subprocess
 import signal
@@ -21,20 +22,21 @@ def process(string, default):
                 count = 0
                 a = ""
                 b = ""
-                for piece in line[1:].split("'"):
+                pieces = re.split(r"(?<!\\)\'", line[1:]) 
+                for piece in pieces:
                     if count == 1:
                         a = piece
                     elif count == 3:
                         open_file = open(piece, "r")
                         read_file = open_file.read()
                         regexes.append([a, []])
-                        process(string, len(regexes) - 1)
+                        process(read_file, len(regexes) - 1)
                         open_file.close()
                     count += 1
             elif line[0] == ':':
                 t = ""
                 count = 0
-                pieces = re.split(r"(?<!\\)'", line[1:])
+                pieces = re.split(r"(?<!\\)\'", line[1:])
                 for piece in pieces:
                     if count == 1:
                         t = piece
@@ -42,6 +44,8 @@ def process(string, default):
                         regexes[default][1].append([t, int(piece)])            
                     count += 1
 def before(optimizing_data_structure, position, special, yes_or_no):
+    if special:
+        return True
     if is_first(optimizing_data_structure, position):
         return True
     while True:
@@ -422,61 +426,76 @@ def main(stdscr):
                 optimizing_data_structure[position[0]][position[1]] += '█'
         file_input = transform_to_text(optimizing_data_structure)
         what_will_be_shown = []
+        areas_in_which_it_applies = []
         for count in range(len(regexes)):
             areas.append([])
-            areas_in_which_it_applies = []
+            areas_in_which_it_applies.append([])
             for match in re.finditer(regexes[count][0], file_input):
                 start_index = match.start()
                 end_index = match.end()
+                areas[len(areas) - 1].append([])
+                areas_in_which_it_applies[len(areas_in_which_it_applies) - 1].append([start_index, end_index])
                 # Get the matched string
                 matched_string = match.group()
                 # Get the span as a tuple
                 span_tuple = match.span()
-                areas_in_which_it_applies.append([start_index, end_index])
-            what_area = 0
-            for regex in regexes[count][1]:
-                areas[len(areas) - 1].append([])
-                for match in re.finditer(regex[0], file_input):
-                    # Get the start and end indices
-                    start_index = match.start()
-                    end_index = match.end()
-                    if end_index > areas_in_which_it_applies[what_area][1]:
-                        what_area += 1
-                    if (start_index >= areas_in_which_it_applies[what_area][0]) and (end_index <= areas_in_which_it_applies[what_area][1]):
-                        areas[len(areas) - 1][len(areas[len(areas) - 1]) - 1].append( [start_index, end_index, regex[1]] )
-                    elif (start_index >= areas_in_which_it_applies[what_area][0]):
-                        areas[len(areas) - 1][len(areas[len(areas) - 1]) - 1].append( [start_index, areas_in_which_it_applies[what_area][1], regex[1]] )
-                    elif (end_index <= areas_in_which_it_applies[what_area][1]):
-                        areas[len(areas) - 1][len(areas[len(areas) - 1]) - 1].append( [areas_in_which_it_applies[what_area][0], end_index, regex[1]] )
-                    # Get the matched string
-                    matched_string = match.group()
-                    # Get the span as a tuple
-                    span_tuple = match.span()
-        numbers = [[]] * len(areas)
-        for some_id in range(len(numbers)):
-            numbers[some_id] = [0] * len( areas[ some_id] )
+        # areas_in_which_it_applies[ ]
+        for area in range( len(areas) ):
+            for subarea in range(len(areas[area])):
+                for regex_count in range( len( regexes[area][1] ) ):
+                    regex = regexes[area][1][regex_count][0]
+                    areas[area][subarea].append([])
+                    for match in re.finditer(regex, file_input[areas_in_which_it_applies[area][subarea][0]:areas_in_which_it_applies[area][subarea][1]]):
+                        # Get the start and end indices
+                        start_index = match.start()
+                        end_index = match.end()
+                        areas[area][subarea][regex_count].append( [start_index, end_index, regexes[area][1][regex_count][1]] )
+                        # Get the matched string
+                        matched_string = match.group()
+                        # Get the span as a tuple
+                        span_tuple = match.span()
         stdscr.erase()
         stdscr.move(0, 0) 
         cursor = 0
+        numbers = []
+        super_super_area_integer = len(areas) - 1
+        while super_super_area_integer >= 0:
+            numbers.append([])
+            for super_area_integer in range(len(areas[len(numbers) - 1])):
+                numbers[len(numbers) - 1].append([])
+                for area_integer in range(len(areas[len(numbers) - 1][super_area_integer])):
+                    numbers[len(numbers) - 1][super_area_integer].append(0)
+            super_super_area_integer -= 1
         for character_id in range(len(file_input)):
             no_color = True
-            for super_area_integer in range(len(areas)):
-                for area_integer in range(len(areas[super_area_integer])):
-                    if len( areas[super_area_integer][area_integer] ) > 0:
-                        color = areas[super_area_integer][area_integer][ numbers[super_area_integer][area_integer] ][2]
-                        if( character_id > areas[super_area_integer][area_integer][ numbers[super_area_integer][area_integer] ][1]):
-                            if (numbers[super_area_integer][area_integer] + 1) < (len( areas[super_area_integer][area_integer] )): 
-                                numbers[super_area_integer][area_integer] += 1
-                        if(no_color):
-                            if((character_id < areas[super_area_integer][area_integer][numbers[super_area_integer][area_integer]][1]) and (character_id >= areas[super_area_integer][area_integer][numbers[super_area_integer][area_integer] ][0])):
-                                what_will_be_shown.append( [color + 2, file_input[character_id]] )
+            super_super_area_integer = len(areas) - 1
+            while super_super_area_integer >= 0:
+                numbers[super_super_area_integer].append([])
+                for super_area_integer in range(len(areas[super_super_area_integer])):
+                    numbers[super_super_area_integer][super_area_integer].append([])
+                    for area_integer in range(len(areas[super_super_area_integer][super_area_integer])):
+                        if len(areas[super_super_area_integer][super_area_integer][area_integer]) == 0:
+                            continue                    
+                        sub_area_integer = numbers[super_super_area_integer][super_area_integer][area_integer]
+                        three_values = areas[super_super_area_integer][super_area_integer][area_integer][sub_area_integer]
+                        upper_bound = three_values[1]
+                        lower_bound = three_values[0]
+                        color = three_values[2]
+                        if character_id > upper_bound:
+                            numbers[super_super_area_integer][super_area_integer][area_integer] += 1
+                            if numbers[super_super_area_integer][super_area_integer][area_integer] >= len(areas[super_super_area_integer][super_area_integer][area_integer]):
+                                numbers[super_super_area_integer][super_area_integer][area_integer] -= 1
+                        elif (character_id <= upper_bound) and (character_id >= lower_bound):
+                            if no_color:
                                 no_color = False
+                                what_will_be_shown.append( [color, file_input[character_id] ] ) 
+                super_super_area_integer -= 1
             if no_color:
-                what_will_be_shown.append( [2, file_input[character_id]] )
+                what_will_be_shown.append( [0, file_input[character_id]] )
         if special:
             stdscr.addstr("█", curses.color_pair(2) | curses.A_BOLD)
         for color_id, text in what_will_be_shown:
-            stdscr.addstr(text, curses.color_pair(color_id) | curses.A_BOLD)
+            stdscr.addstr(text, curses.color_pair(color_id + 2) | curses.A_BOLD)
         if enabled:
             optimizing_data_structure[position[0]][position[1]] = optimizing_data_structure[position[0]][position[1]][0]
         stdscr.refresh()

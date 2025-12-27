@@ -362,13 +362,13 @@ def main(stdscr):
                     return
             elif keyboard_key == '\x06':
                 an_array = multi_input_popup("Find", ["Find", "Distance (negative number or positive number or zero to cancel)"])
-                if len(an_array) == 0:
+                if an_array == ['','']:
                     continue
                 find( optimizing_data_structure, an_array[0], int(an_array[1]), position)
             elif keyboard_key == '\x12':
                 if able_to_be_modified:
                     an_array = multi_input_popup("Find and replace all popup", ["Find", "Replace with"])
-                    if len(an_array) == 0:
+                    if an_array == ['','']:
                         continue
                     find_and_replace( optimizing_data_structure, an_array[0], an_array[1])
                     last = len(optimizing_data_structure) - 1
@@ -419,11 +419,15 @@ def main(stdscr):
         if len(optimizing_data_structure[position[0]][position[1]]) == 0:
             special = before(optimizing_data_structure, position, special, False)
             if len(optimizing_data_structure[position[0]][position[1]]) == 0:
-                special = True 
-        if len(optimizing_data_structure[position[0]][position[1]]) == 1:
-            if special == False:
-                enabled = True
-                optimizing_data_structure[position[0]][position[1]] += '█'
+                special = True
+        i = 0
+        if special == False:
+            ps = [0,0]
+            if len(optimizing_data_structure[0]) > 0:
+                while (position[0] != ps[0]) or (ps[1] != position[1]):
+                    if(optimizing_data_structure[ps[0]][ps[1]] != ''):
+                        i += 1
+                    after(optimizing_data_structure, ps, False, False)
         file_input = transform_to_text(optimizing_data_structure)
         what_will_be_shown = []
         areas_in_which_it_applies = []
@@ -494,9 +498,12 @@ def main(stdscr):
                 what_will_be_shown.append( [0, file_input[character_id]] )
         if special:
             stdscr.addstr("█", curses.color_pair(2) | curses.A_BOLD)
+        j = 0
         for color_id, text in what_will_be_shown:
             stdscr.addstr(text, curses.color_pair(color_id + 2) | curses.A_BOLD)
-        if enabled:
-            optimizing_data_structure[position[0]][position[1]] = optimizing_data_structure[position[0]][position[1]][0]
+            if special == False:
+                if i == j:
+                    stdscr.addstr("█", curses.color_pair(2) | curses.A_BOLD)
+            j += 1
         stdscr.refresh()
 curses.wrapper(main)

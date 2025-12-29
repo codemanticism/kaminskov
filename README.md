@@ -1,6 +1,38 @@
 # kaminskov
 <img width="128" height="128" alt="kaminskov" src="https://github.com/user-attachments/assets/e1229569-9b7d-496e-9894-6900a8154c36" />
 
+## Installing
+> [ALERT]
+> This is still experimental.
+
+#To install it, the environment has to support all of this:
+* time
+* sys (needs to read arguments)
+* subprocess
+* signal
+* locale
+* tkinter
+* threading
+* time
+* re
+* curses
+I recommend using the project https://docs.conda.io/projects/conda/en/stable/index.html to then use Nuitka thru `python3 -m nuitka main.py` to then compile the code to make it run faster, because I found that it is more predictable than PyPy, which instead uses JIT compilation.
+CPython does currently have a JIT compiler, but it is experimental, as of what I have seen, as of December 2025.
+> [NOTICE]
+> Replace with ~ what you want.
+
+```bash
+cd ~
+git clone git@github.com:codemanticism/kaminskov.git
+cd kaminskov
+python3 -m nuitka main.py
+chmod u+x main.sh
+mv main.sh /usr/local/bin/kaminskov
+kaminskov
+```
+
+## Explanation
+
 Text editor in which one can code in the terminal I made as an alternative to micro (https://github.com/zyedidia/micro). I made it because I wanted to edit `.html` files in it, but the Javascript code incorporated into the `.html` file itself was not treated as seperate by the current release of micro. It is compatible with the current release of PyPy for Python 3 which can be used for faster loading speeds. It is supposed to be easier than something like Vim, but it might be initially less intuitive than micro. 
 - <kbd>CTRL</kbd> + <kbd>K</kbd>: Defining a starting point for the selection.
 - <kbd>CTRL</kbd> + <kbd>L</kbd>: Cancelling the selection.

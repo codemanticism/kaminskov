@@ -429,7 +429,7 @@ def main(stdscr):
                     after(optimizing_data_structure, ps, False, False)
         file_input = transform_to_text(optimizing_data_structure)
         what_will_be_shown = []
-        areas_in_which_it_applies = [[]] * len(regexes)
+        areas_in_which_it_applies = [[] for _ in range(len(regexes))]
         count = len(regexes) - 1
         while count >= 0:
             areas_in_which_it_applies.append([])
@@ -459,8 +459,9 @@ def main(stdscr):
                 # Get the span as a tuple
                 span_tuple = match.span()
             count -= 1
-        areas = [[]] * len(areas_in_which_it_applies)
+        areas = [[] for _ in range(len(areas_in_which_it_applies))]
         f = [0,0,0]
+        number = len(regexes) - 1
         while f[0] < len(areas_in_which_it_applies):
             areas.append([])
             f[1] = 0
@@ -468,8 +469,9 @@ def main(stdscr):
                 areas[f[0]].append([])
                 f[2] = 0
                 for regex in regexes[f[0]][1]:
+                    #print(some_range, f[0])
                     areas[f[0]][f[1]].append([])
-                    # print(regex[0], file_input[some_range[0]:some_range[1]])
+                    #print("@", regex[0], file_input[some_range[0]:some_range[1]], "@")
                     for match in re.finditer(regex[0], file_input[some_range[0]:some_range[1]]):
                         start_index = match.start()
                         end_index = match.end()
@@ -477,6 +479,7 @@ def main(stdscr):
                     f[2] += 1
                 f[1] += 1
             f[0] += 1
+            number -= 1
         stdscr.erase()
         stdscr.move(0, 0)
         cursor = 0

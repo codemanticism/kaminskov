@@ -1,0 +1,2 @@
+@ '[\s\S]*' 'js.txt'
+: '\b(new|of|package|private|protected|public|require|return|set|static|super|switch)\b' '1'

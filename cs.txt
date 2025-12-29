@@ -1,0 +1,9 @@
+: '\b(bool|byte|sbyte|char|decimal|double|float|IntPtr|int|uint|long|ulong|managed|unmanaged|nint|nuint|object|short|ushort|string|base|this|var|void)\b' '1'
+: '\b(alias|as|case|catch|checked|default|do|dynamic|else|finally|fixed|for|foreach|goto|if|is|lock|new|null|return|switch|throw|try|unchecked|when|while|with)\b' '1'
+: '\b(abstract|add|and|args|async|await|class|const|delegate|enum|event|explicit|extern|file|get|global|implicit|in|init|internal|interface|nameof|namespace|not|notnull|operator|or|out|override|params|partial|private|protected|public|readonly|record|ref|remove|required|scoped|sealed|set|sizeof|stackalloc|static|struct|typeof|unsafe|using|value|virtual|volatile|yield)\b' '1'
+
+: '\b(from|where|select|group|info|orderby|join|let|in|on|equals|by|ascending|descending)\b' '1'
+: '\b(break|continue)\b' '1'
+: '\b(true|false)\b' '1'
+: '\'([^\'\\]*(?:\\.[^\'\\]*)*)\'' '2'
+: '"([^"\\]*(?:\\.[^"\\]*)*)"' '2'

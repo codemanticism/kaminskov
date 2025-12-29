@@ -119,50 +119,22 @@ def is_last(optimizing_data_structure, position):
     #print(px, position)
     #print(len(optimizing_data_structure) - 1)
     return px == position
-def multi_input_popup(title, string_arrays):
-    # Hidden root
-    root = tk.Tk()
-    root.withdraw()
-
-    # Popup window
-    popup = tk.Toplevel(root)
-    popup.title(title)
-    popup.geometry("600x600")
-    entries = []
-
-    for some_string in string_arrays:
-        tk.Label(popup, text=some_string).pack(pady=5)
-
-        text = tk.Text(popup, width=30, height=4)
-        text.pack(pady=5)
-
-        entries.append(text)
-        
-    validation = []
-    def on_ok():
-        validation.clear()
-        for text in entries:
-            validation.append(text.get("1.0", "end-1c"))  # keep newlines
-        popup.destroy()
-        root.destroy()
-
-    def on_close():
-        # Return empty list
-        validation.clear()
-        popup.destroy()
-        root.destroy()
-    popup.bind("<Control-Return>", lambda event: on_ok())
-    popup.bind("<Control-Enter>",  lambda event: on_ok())
-    popup.protocol("WM_DELETE_WINDOW", on_close)
-    tk.Button(popup, text="OK", command = on_ok).pack(pady=10)
-
-    popup.mainloop()
-    return validation
+def curses_input_popup(stdscr, title, prompts):
+    curses.echo()
+    stdscr.clear()
+    stdscr.addstr(f"{title}\n\n")
+    results = []
+    for prompt in prompts:
+        stdscr.addstr(prompt + ": ")
+        inp = stdscr.getstr().decode("utf-8")
+        results.append(inp)
+    curses.noecho()
+    return results
 def find_and_replace(optimizing_data_structure, match_with, replace_with):
     position = [0,0]
     special = False
     while optimizing_data_structure[position[0]][position[1]] == '':
-        special = after(optimizing_data_structure, position, False)
+        special = after(optimizing_data_structure, position, special, False)
     while True:
         px = [0,0]
         px[0] = position[0]
@@ -176,7 +148,7 @@ def find_and_replace(optimizing_data_structure, match_with, replace_with):
                     optimizing_data_structure[position[0]][position[1]] = replace_with[index]
                 else:
                     optimizing_data_structure[position[0]][position[1]] = '' # lack of alignment between
-                special = after(optimizing_data_structure, position, False)
+                special = after(optimizing_data_structure, position, special, False)
                 index += 1
                 if (index) == len(match_with):
                     special = before(optimizing_data_structure, position, special, False)
@@ -187,9 +159,9 @@ def find_and_replace(optimizing_data_structure, match_with, replace_with):
                         optimizing_data_structure.append([character])
                     else:
                         optimizing_data_structure[position[0]].insert(1 + position[1], character)
-                    special = after(optimizing_data_structure, position, False,  False)
+                    special = after(optimizing_data_structure, position, special,  False)
         else:
-            special = after(optimizing_data_structure, position, False)
+            special = after(optimizing_data_structure, position, False, False)
             if is_last(optimizing_data_structure, position):
                 return
 def find(optimizing_data_structure, match_with, order, position):
@@ -235,6 +207,7 @@ def main(stdscr):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     global regexes
     global txt
+    global tk_alive
     if len(argv) >= 2:
         if "." in argv[1]:
             seperation = argv[1].split(".")
@@ -252,10 +225,10 @@ def main(stdscr):
             optimizing_data_structure.append([character])    
         read_text_file.close()
     except:
-        optimizing_data_structure = [[' ']] # A data structure optimized for the purpose of addition and deletion
+        optimizing_data_structure = [['']] # A data structure optimized for the purpose of addition and deletion
     new_text = []
     save_as = ""
-    special = False
+    special = True
     position = [0,0]
     curses.noecho()
     curses.cbreak()
@@ -278,7 +251,6 @@ def main(stdscr):
     curses.raw()          # Ctrl+C becomes input, not SIGINT
     curses.noecho()       # optional
     stdscr.keypad(True)   # optional but recommended
-    
     while True:
         keyboard_key = stdscr.get_wch()
         # Dealing with keys
@@ -351,26 +323,57 @@ def main(stdscr):
                     except:
                         0
                 if save_as == "":
-                    save_as_array = multi_input_popup("Save popup", ["Save as ..."])
+                    save_as_array  = curses_input_popup(stdscr, "Save popup", ["Save as ..."])
                     if len(save_as_array) > 0:
                         save_as = save_as_array[0]
-                if save_as != "":    
-                    write_file = open(save_as, "w")
-                    write_file.write(transform_to_text(optimizing_data_structure))
-                    write_file.close()            
+                if save_as != "":
+                    try:    
+                        write_file = open(save_as, "w")
+                        write_file.write(transform_to_text(optimizing_data_structure))
+                        write_file.close()
+                    except:
+                        0            
                 if (keyboard_key == '\x11'):
                     return
-            elif keyboard_key == '\x06':
-                an_array = multi_input_popup("Find", ["Find", "Distance (negative number or positive number or zero to cancel)"])
-                if an_array == ['','']:
+            elif keyboard_key == '\x06': #CTRL  F
+                an_array = curses_input_popup(stdscr, "Find", ["Find", "Distance (negative number or positive number or zero to cancel)"])
+                if an_array == []:
                     continue
-                find( optimizing_data_structure, an_array[0], int(an_array[1]), position)
+                elif an_array == ['','']:
+                    continue
+                try:
+                    find( optimizing_data_structure, an_array[0], int(an_array[1]), position)
+                except:
+                    0
+            elif keyboard_key == '\x16': #CTRL + V
+                result = subprocess.run(
+                    ["xclip", "-selection", "clipboard", "-o"],
+                    text=True,
+                    check=True,
+                    capture_output=True
+                )
+                clipboard_text = result.stdout
+                for clipboard_character in clipboard_text:
+                    if able_to_be_modified:            
+                        if(special):
+                            optimizing_data_structure[position[0]].insert(0, clipboard_character)
+                        else:
+                            if (position[0] + 1) not in range(len(optimizing_data_structure)):
+                                optimizing_data_structure.append([clipboard_character])
+                            else:
+                                optimizing_data_structure[position[0]].insert(1 + position[1], clipboard_character)
+                        special = after(optimizing_data_structure, position, special, True)                     
             elif keyboard_key == '\x12':
                 if able_to_be_modified:
-                    an_array = multi_input_popup("Find and replace all popup", ["Find", "Replace with"])
-                    if an_array == ['','']:
+                    an_array = curses_input_popup(stdscr, "Find and replace", ["Find", "Replace"])
+                    if an_array == []:
                         continue
-                    find_and_replace( optimizing_data_structure, an_array[0], an_array[1])
+                    elif an_array == ['','']:
+                        continue
+                    try:
+                        find_and_replace( optimizing_data_structure, an_array[0], an_array[1])
+                    except:
+                        0
                     last = len(optimizing_data_structure) - 1
                     position = [last ,len(optimizing_data_structure[last]) - 1]
                     special = False
@@ -415,6 +418,7 @@ def main(stdscr):
         #print(position)
         position_on_the_line = 0
         enabled = False
+        able_to_be_modified = False
         if len(optimizing_data_structure[position[0]][position[1]]) == 0:
             special = before(optimizing_data_structure, position, special, False)
             if len(optimizing_data_structure[position[0]][position[1]]) == 0:
@@ -510,4 +514,5 @@ def main(stdscr):
                     stdscr.addch("█")
             j += 1
         stdscr.refresh()
+        able_to_be_modified = True
 curses.wrapper(main)

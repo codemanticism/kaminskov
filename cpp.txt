@@ -1,0 +1,3 @@
+@ '[\s\S]*' 'c.txt'
+: '\b(class|namespace|template|typename|this|friend|using|public|protected|private|noexcept)\b' '2'
+
